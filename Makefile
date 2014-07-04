@@ -21,7 +21,9 @@ CFLAGS := -g -pipe -O2 -Wall \
 
 WORMS_BIN := worms
 WORMS_LIBS := -lreadline
-WORMS_OBJ := worms.o
+WORMS_OBJ := worms.o \
+		wa.o \
+		hexdump.o
 
 ALL_BIN := $(WORMS_BIN)
 ALL_OBJ := $(WORMS_OBJ)
