@@ -171,6 +171,8 @@ static int wa__login(wa_t wa, const char *nick)
 	if ( r->h_command != WORMS_SERVER_LOGIN_OK ) {
 		printf("bad login\n");
 		return 0;
+	}else{
+		printf("login OK\n");
 	}
 
 	memset(&l2, 0, sizeof(l2));
@@ -184,12 +186,7 @@ static int wa__login(wa_t wa, const char *nick)
 	if ( !wa__send(wa, &l2, sizeof(l2)) )
 		return 0;
 
-	free(wa->nick);
-	wa->nick = strdup(nick);
-	if ( NULL == wa->nick ) {
-		fprintf(stderr, "%s: calloc: %s\n", cmd, sys_err());
-		return 0;
-	}
+	snprintf(wa->nick, sizeof(wa->nick), "%s", nick);
 	return 1;
 }
 
@@ -214,10 +211,17 @@ static int wa__player_list(wa_t wa, const struct wa_hdr *r)
 
 	printf("Player list: %u players\n", p->p_num_players);
 	for(i = cnt = 0; i < 7 && cnt < p->p_num_players; i++) {
+		int me;
+
 		if ( p->p_player[0].name[0] == '\0' ) {
 			continue;
 		}
-		printf(" [%u] %.*s\n", i, 17, p->p_player[i].name);
+
+		me = !strncmp(wa->nick, p->p_player[i].name, sizeof(wa->nick));
+		printf(" [%u] %.*s%s\n", i, 17, p->p_player[i].name,
+			(me) ? " (*)" : "");
+		if ( me )
+			wa->playerid = i;
 		cnt++;
 	}
 
@@ -357,7 +361,7 @@ int wa_ready(wa_t wa, int ready)
 	rdy.r_hdr.h_chan = 1;
 	rdy.r_hdr.h_len = sizeof(rdy);
 	rdy.r_hdr.h_command = WORMS_SERVER_READY;
-	rdy.r_playerid = 1;
+	rdy.r_playerid = wa->playerid;
 	rdy.r_ready = !!ready;
 
 	return wa__send(wa, &rdy, sizeof(rdy));
@@ -414,7 +418,6 @@ out:
 void wa_close(wa_t wa)
 {
 	if ( wa ) {
-		free(wa->nick);
 		close(wa->s);
 		free(wa);
 	}

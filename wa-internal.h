@@ -3,7 +3,8 @@
 
 struct _wa {
 	struct sockaddr_in sa;
-	char *nick;
+	char nick[17];
+	uint8_t playerid;
 	int s;
 	int go;
 	uint8_t *msg_head;
