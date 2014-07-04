@@ -73,6 +73,10 @@ static void cmd_handler(char *cmd)
 		wa_exit_mainloop(wa);
 		return;
 	}
+	if ( NULL == wa ) {
+		printf("Not connected yet\n");
+		return;
+	}
 
 	if ( cmd[0] == '/' ) {
 		char *sp;

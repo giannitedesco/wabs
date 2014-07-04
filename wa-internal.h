@@ -7,6 +7,7 @@ struct _wa {
 	uint8_t playerid;
 	int s;
 	int go;
+	wgt_t wgt;
 	uint8_t *msg_head;
 	uint8_t *msg_tail;
 	uint8_t buf[8192];

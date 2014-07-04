@@ -13,6 +13,7 @@
 
 #include <worms/worms.h>
 #include <worms/wa.h>
+#include <worms/wgt.h>
 #include <worms/wa-protocol.h>
 
 #include "wa-internal.h"
@@ -238,7 +239,7 @@ static int wa__player_join(wa_t wa, const struct wa_hdr *r)
 static int wa__team_list(wa_t wa, const struct wa_hdr *r)
 {
 	printf("Team list %u\n", r->h_len);
-	//hex_dump(r, r->h_len, 0);
+	hex_dump(r->data, r->h_len - sizeof(*r), 0);
 	return 1;
 }
 
@@ -400,6 +401,8 @@ wa_t wa_connect(uint32_t ip, uint16_t port, const char *nick)
 	wa->msg_tail = wa->buf;
 	wa->go = 1;
 
+	wa->wgt = wgt_open("/home/scara/wormsarm/User/Teams/WG.WGT");
+
 	printf("connected\n");
 	if ( !wa__login(wa, nick) )
 		goto out_close;
@@ -418,6 +421,7 @@ out:
 void wa_close(wa_t wa)
 {
 	if ( wa ) {
+		wgt_close(wa->wgt);
 		close(wa->s);
 		free(wa);
 	}

@@ -23,6 +23,7 @@ WORMS_BIN := worms
 WORMS_LIBS := -lreadline
 WORMS_OBJ := worms.o \
 		wa.o \
+		wgt.o \
 		hexdump.o
 
 ALL_BIN := $(WORMS_BIN)

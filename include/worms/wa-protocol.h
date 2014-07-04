@@ -63,7 +63,9 @@ struct wa_ready {
 }__attribute__((packed));
 
 #define WORMS_SERVER_TEAM_LIST		0x0c
+#define WORMS_SERVER_TEAM_REMOVE	0x10
 #define WORMS_SERVER_KICK		0x1b
+#define WORMS_SERVER_TEAM_ADD		0x1a
 #define WORMS_SERVER_DEFAULT_SCHEME	0x1f
 struct wa_default_scheme {
 	struct wa_hdr s_hdr;
