@@ -39,6 +39,7 @@ struct _wgt {
 
 static void dump(struct _wgt *w)
 {
+#if 0
 	unsigned int i;
 
 	printf("%u teams\n", w->hdr->wgt_num_teams);
@@ -61,6 +62,7 @@ static void dump(struct _wgt *w)
 			printf(" - %s\n", w->team[i].t_worm[j]);
 		}
 	}
+#endif
 }
 
 wgt_t wgt_open(const char *fn)
@@ -86,12 +88,26 @@ wgt_t wgt_open(const char *fn)
 		goto out_free;
 	}
 
+	if ( w->maplen < sizeof(*w->hdr) ) {
+		fprintf(stderr, "%s: %s: too small to be a wgt file\n",
+				cmd, fn);
+		goto out_close;
+	}
+
+	if ( strncmp(w->hdr->wgt_sig, WGT_SIG, sizeof(w->hdr->wgt_sig)) ) {
+		fprintf(stderr, "%s: %s: doesn't look like a WGT file\n",
+				cmd, fn);
+		goto out_close;
+	}
+
 	w->team = (void *)&w->hdr[1];
 	dump(w);
 
 	/* success */
 	goto out;
 
+out_close:
+	munmap((void *)w->hdr, w->maplen);
 out_free:
 	free(w);
 	w = NULL;

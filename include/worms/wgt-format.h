@@ -1,6 +1,7 @@
 #ifndef _WA_PROTOCOK_H
 #define _WGT_FORMAT_H
 
+#define WGT_SIG		"WGT"
 struct wgt_hdr {
 	char		wgt_sig[3];
 	char		wgt_pad0[2];

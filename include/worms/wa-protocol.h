@@ -63,6 +63,27 @@ struct wa_ready {
 }__attribute__((packed));
 
 #define WORMS_SERVER_TEAM_LIST		0x0c
+struct wa_team_list {
+	struct wa_hdr		hdr;
+	uint16_t		pad0;
+	uint16_t		slot;
+	uint16_t		pad1;
+	uint8_t			playerid;
+	uint8_t			color;
+	uint8_t			pad2;
+	char			name[17];
+	char			soundbank[32];
+	uint16_t		soundbank_flag; /* ? */
+	char			fanfare[30];
+	uint8_t			pad3;
+	char			fanfare2[30];
+	uint8_t			pad4[41];
+
+	uint8_t			worm[8][17];
+
+	uint8_t			pad[3160];
+}__attribute__((packed));
+
 #define WORMS_SERVER_TEAM_REMOVE	0x10
 #define WORMS_SERVER_KICK		0x1b
 #define WORMS_SERVER_TEAM_ADD		0x1a

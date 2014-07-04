@@ -225,6 +225,7 @@ static int wa__player_list(wa_t wa, const struct wa_hdr *r)
 			wa->playerid = i;
 		cnt++;
 	}
+	printf("\n");
 
 	return 1;
 }
@@ -238,8 +239,20 @@ static int wa__player_join(wa_t wa, const struct wa_hdr *r)
 
 static int wa__team_list(wa_t wa, const struct wa_hdr *r)
 {
-	printf("Team list %u\n", r->h_len);
-	hex_dump(r->data, r->h_len - sizeof(*r), 0);
+	const struct wa_team_list *t = (struct wa_team_list *)r;
+	//printf("Team list %zu bytes\n", r->h_len - sizeof(*r));
+	//printf("struct is %zu bytes\n", sizeof(*t) - sizeof(t->hdr));
+	printf("Team(%u): (player=%u) %s\n",
+		t->slot, t->playerid, t->name);
+//	printf("  pad0 = %.2x\n", t->pad0);
+//	printf("  pad1 = %.2x\n", t->pad1);
+//	printf("  pad2 = %.2x\n", t->pad2);
+	printf("  color = %u\n", t->color);
+	printf("  soundbank = %s\n", t->soundbank);
+	printf("  fanfare2 = %s\n", t->fanfare);
+	printf("  fanfare2 = %s\n", t->fanfare2);
+	//hex_dump(t->pad, sizeof(t->pad), 0);
+	printf("\n");
 	return 1;
 }
 
