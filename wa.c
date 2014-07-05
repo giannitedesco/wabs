@@ -129,9 +129,9 @@ static const struct wa_hdr *wa__next_msg(struct _wa *wa)
 	}
 
 	hdr = (struct wa_hdr *)wa->msg_head;
-	assert(hdr->h_len < sizeof(wa->buf));
-	assert(hdr->h_len >= sizeof(*hdr));
-	end = wa->msg_head + hdr->h_len;
+	assert(hdr->len < sizeof(wa->buf));
+	assert(hdr->len >= sizeof(*hdr));
+	end = wa->msg_head + hdr->len;
 	while(wa->msg_tail < end) {
 		//printf("reading for body %zu < %zu\n",
 		//	wa->msg_tail - wa->msg_head, end - wa->msg_head);
@@ -139,9 +139,9 @@ static const struct wa_hdr *wa__next_msg(struct _wa *wa)
 			return NULL;
 	}
 
-	//printf("Dispatching %u bytes\n", hdr->h_len);
-	//hex_dump(hdr, hdr->h_len, 0);
-	wa->msg_head += hdr->h_len;
+	//printf("Dispatching %u bytes\n", hdr->len);
+	//hex_dump(hdr, hdr->len, 0);
+	wa->msg_head += hdr->len;
 	return hdr;
 }
 
@@ -152,15 +152,15 @@ static int wa__login(wa_t wa, const char *nick)
 	struct wa_login2 l2;
 
 	memset(&l, 0, sizeof(l));
-	l.l_hdr.h_chan = 1;
-	l.l_hdr.h_len = sizeof(l);
-	l.l_hdr.h_command = WORMS_COMMAND_LOGIN;
+	l.hdr.chan = 1;
+	l.hdr.len = sizeof(l);
+	l.hdr.command = WORMS_COMMAND_LOGIN;
 
-	snprintf(l.l_name, sizeof(l.l_name), "%s", nick);
-	snprintf(l.l_gamename, sizeof(l.l_gamename), "cunt");
-	l.l_vers[0] = 0xa7;
-	l.l_vers[1] = 0x24;
-	l.l_vers[2] = 0xf4;
+	snprintf(l.name, sizeof(l.name), "%s", nick);
+	snprintf(l.gamename, sizeof(l.gamename), "cunt");
+	l.vers[0] = 0xa7;
+	l.vers[1] = 0x24;
+	l.vers[2] = 0xf4;
 
 	if ( !wa__send(wa, &l, sizeof(l)) )
 		return 0;
@@ -169,7 +169,7 @@ static int wa__login(wa_t wa, const char *nick)
 	if ( NULL == r )
 		return 0;
 
-	if ( r->h_command != WORMS_SERVER_LOGIN_OK ) {
+	if ( r->command != WORMS_SERVER_LOGIN_OK ) {
 		printf("bad login\n");
 		return 0;
 	}else{
@@ -177,12 +177,12 @@ static int wa__login(wa_t wa, const char *nick)
 	}
 
 	memset(&l2, 0, sizeof(l2));
-	l2.l_hdr.h_chan = 1;
-	l2.l_hdr.h_len = sizeof(l2);
-	l2.l_hdr.h_command = WORMS_COMMAND_LOGIN2;
+	l2.hdr.chan = 1;
+	l2.hdr.len = sizeof(l2);
+	l2.hdr.command = WORMS_COMMAND_LOGIN2;
 
-	snprintf(l2.l_name, sizeof(l2.l_name), "%s", nick);
-	l2.l_country = 0xf;
+	snprintf(l2.name, sizeof(l2.name), "%s", nick);
+	l2.country = 0xf;
 
 	if ( !wa__send(wa, &l2, sizeof(l2)) )
 		return 0;
@@ -193,7 +193,7 @@ static int wa__login(wa_t wa, const char *nick)
 
 static int wa__chat(wa_t wa, const struct wa_hdr *r)
 {
-	printf("Chat: %.*s\n", (int)(r->h_len - sizeof(*r)), r->data);
+	printf("Chat: %.*s\n", (int)(r->len - sizeof(*r)), r->data);
 	return 1;
 }
 
@@ -201,7 +201,7 @@ static int wa__ready(wa_t wa, const struct wa_hdr *r)
 {
 	const struct wa_ready *rdy = (struct wa_ready *)r;
 	printf("Player %u %sready!\n",
-		rdy->r_playerid, (rdy->r_ready) ? "" : "not ");
+		rdy->playerid, (rdy->ready) ? "" : "not ");
 	return 1;
 }
 
@@ -210,16 +210,16 @@ static int wa__player_list(wa_t wa, const struct wa_hdr *r)
 	const struct wa_playerlist *p = (struct wa_playerlist *)r;
 	unsigned int i, cnt;
 
-	printf("Player list: %u players\n", p->p_num_players);
-	for(i = cnt = 0; i < 7 && cnt < p->p_num_players; i++) {
+	printf("Player list: %u players\n", p->num_players);
+	for(i = cnt = 0; i < 7 && cnt < p->num_players; i++) {
 		int me;
 
-		if ( p->p_player[0].name[0] == '\0' ) {
+		if ( p->player[0].name[0] == '\0' ) {
 			continue;
 		}
 
-		me = !strncmp(wa->nick, p->p_player[i].name, sizeof(wa->nick));
-		printf(" [%u] %.*s%s\n", i, 17, p->p_player[i].name,
+		me = !strncmp(wa->nick, p->player[i].name, sizeof(wa->nick));
+		printf(" [%u] %.*s%s\n", i, 17, p->player[i].name,
 			(me) ? " (*)" : "");
 		if ( me )
 			wa->playerid = i;
@@ -233,14 +233,14 @@ static int wa__player_list(wa_t wa, const struct wa_hdr *r)
 static int wa__player_join(wa_t wa, const struct wa_hdr *r)
 {
 	printf("Player join\n");
-	hex_dump(r->data, r->h_len - sizeof(*r), 0);
+	hex_dump(r->data, r->len - sizeof(*r), 0);
 	return 1;
 }
 
 static int wa__team_list(wa_t wa, const struct wa_hdr *r)
 {
 	const struct wa_team_list *t = (struct wa_team_list *)r;
-	//printf("Team list %zu bytes\n", r->h_len - sizeof(*r));
+	//printf("Team list %zu bytes\n", r->len - sizeof(*r));
 	//printf("struct is %zu bytes\n", sizeof(*t) - sizeof(t->hdr));
 	printf("Team(%u): (player=%u) %s\n",
 		t->slot, t->playerid, t->name);
@@ -280,11 +280,11 @@ static int wa__start_game(wa_t wa, const struct wa_hdr *r)
 			uint16_t status;
 		}__attribute__((packed)) pkt;
 
-		pkt.hdr.h_chan = WORMS_CHAN_GAME;
-		pkt.hdr.h_unknown = 0;
-		pkt.hdr.h_len = sizeof(pkt);
-		pkt.hdr.h_command = 0x1;
-		pkt.hdr.h_frame = wa->frame;
+		pkt.hdr.chan = WORMS_CHAN_GAME;
+		pkt.hdr.unknown = 0;
+		pkt.hdr.len = sizeof(pkt);
+		pkt.hdr.command = 0x1;
+		pkt.hdr.frame = wa->frame;
 		pkt.pad0 = 0;
 		pkt.flag = 0x0ac00000;
 		pkt.status = (wa->frame - 1) * 4;
@@ -317,8 +317,8 @@ static int wa__default_scheme(wa_t wa, const struct wa_hdr *r)
 	};
 	const char *name;
 
-	if ( s->s_scheme < sizeof(tbl)/sizeof(*tbl) && tbl[s->s_scheme] )
-		name = tbl[s->s_scheme];
+	if ( s->scheme < sizeof(tbl)/sizeof(*tbl) && tbl[s->scheme] )
+		name = tbl[s->scheme];
 	else
 		name = tbl[2];
 	printf("Default scheme: %s\n", name);
@@ -340,7 +340,7 @@ void wa_exit_mainloop(wa_t wa)
 
 static int wa__dispatch_lobby(wa_t wa, const struct wa_hdr *r)
 {
-	switch(r->h_command) {
+	switch(r->command) {
 	case WORMS_SERVER_CHAT:
 		wa__chat(wa, r);
 		break;
@@ -370,16 +370,16 @@ static int wa__dispatch_lobby(wa_t wa, const struct wa_hdr *r)
 		break;
 	default:
 		if ( wa->frame ) {
-			((struct wa_hdr *)r)->h_command = 0x25;
+			((struct wa_hdr *)r)->command = 0x25;
 			((struct wa_hdr *)r)->data[2] = 0x1;
-			if ( !wa__send(wa, r, r->h_len) )
+			if ( !wa__send(wa, r, r->len) )
 				return 0;
 			printf("ECHO ONE; ");
 			wa->frame = 0;
 		}
 		printf("Unknown lobby cmd: 0x%.2x len=%u\n",
-			r->h_command, r->h_len);
-		hex_dump(r->data, r->h_len - sizeof(*r), 0);
+			r->command, r->len);
+		hex_dump(r->data, r->len - sizeof(*r), 0);
 		break;
 	}
 
@@ -388,19 +388,19 @@ static int wa__dispatch_lobby(wa_t wa, const struct wa_hdr *r)
 
 static int wa__dispatch_game(wa_t wa, const struct wa_hdr *r)
 {
-	switch(r->h_command) {
+	switch(r->command) {
 	case 0:
-		if ( r->h_frame == 0x1b ) {
+		if ( r->frame == 0x1b ) {
 			/* echo it back */
-			if ( !wa__send(wa, r, r->h_len) )
+			if ( !wa__send(wa, r, r->len) )
 				return 0;
 			wa->frame++;
 			printf("ECHO: ");
 		}
 	default:
 		printf("Unknown game cmd: 0x%.2x frame=%.2x len=%u\n",
-			r->h_command, r->h_frame, r->h_len);
-		hex_dump(r->data, r->h_len - sizeof(*r), 0);
+			r->command, r->frame, r->len);
+		hex_dump(r->data, r->len - sizeof(*r), 0);
 		break;
 	}
 	return 1;
@@ -413,7 +413,7 @@ int wa_mainloop(wa_t wa)
 		r = wa__next_msg(wa);
 		if ( NULL == r )
 			return 0;
-		switch(r->h_chan) {
+		switch(r->chan) {
 		case WORMS_CHAN_LOBBY:
 			wa__dispatch_lobby(wa, r);
 			break;
@@ -422,8 +422,8 @@ int wa_mainloop(wa_t wa)
 			break;
 		default:
 			printf("Unknown chan: 0x%.2x msg=0x%.2x len=%u\n",
-				r->h_chan, r->h_command, r->h_len);
-			hex_dump(r->data, r->h_len - sizeof(*r), 0);
+				r->chan, r->command, r->len);
+			hex_dump(r->data, r->len - sizeof(*r), 0);
 			break;
 		}
 	}
@@ -446,12 +446,12 @@ int wa_chat(wa_t wa, const char *type, const char *to, const char *msg)
 			type, wa->nick,
 			(to) ? to : "ALL", msg);
 	memset(&buf.hdr, 0, sizeof(buf.hdr));
-	buf.hdr.h_chan = 1;
-	buf.hdr.h_unknown = 0;
-	buf.hdr.h_len = len + sizeof(buf.hdr) + 1;
-	buf.hdr.h_command = WORMS_SERVER_CHAT;
+	buf.hdr.chan = 1;
+	buf.hdr.unknown = 0;
+	buf.hdr.len = len + sizeof(buf.hdr) + 1;
+	buf.hdr.command = WORMS_SERVER_CHAT;
 	printf(">>> %.*s\n", (int)sizeof(buf.msg), buf.msg);
-	return wa__send(wa, &buf, buf.hdr.h_len);
+	return wa__send(wa, &buf, buf.hdr.len);
 }
 
 int wa_ready(wa_t wa, int ready)
@@ -459,11 +459,11 @@ int wa_ready(wa_t wa, int ready)
 	struct wa_ready rdy;
 
 	memset(&rdy, 0, sizeof(rdy));
-	rdy.r_hdr.h_chan = 1;
-	rdy.r_hdr.h_len = sizeof(rdy);
-	rdy.r_hdr.h_command = WORMS_SERVER_READY;
-	rdy.r_playerid = wa->playerid;
-	rdy.r_ready = !!ready;
+	rdy.hdr.chan = 1;
+	rdy.hdr.len = sizeof(rdy);
+	rdy.hdr.command = WORMS_SERVER_READY;
+	rdy.playerid = wa->playerid;
+	rdy.ready = !!ready;
 
 	return wa__send(wa, &rdy, sizeof(rdy));
 }
