@@ -442,9 +442,10 @@ int wa_chat(wa_t wa, const char *type, const char *to, const char *msg)
 	}buf;
 	int len;
 
-	len = snprintf(buf.msg, sizeof(buf.msg), "%s:%s:%s:%s\n",
+	len = snprintf(buf.msg, sizeof(buf.msg), "%s:%s:%s:%s",
 			type, wa->nick,
 			(to) ? to : "ALL", msg);
+	memset(&buf.hdr, 0, sizeof(buf.hdr));
 	buf.hdr.h_chan = 1;
 	buf.hdr.h_unknown = 0;
 	buf.hdr.h_len = len + sizeof(buf.hdr);
