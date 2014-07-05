@@ -265,14 +265,14 @@ static int wa__kick(wa_t wa, const struct wa_hdr *r)
 static int wa__start_game(wa_t wa, const struct wa_hdr *r)
 {
 	const struct wa_start_game *s = (struct wa_start_game *)r;
-	unsigned int i;
+
 	printf("Game starting!\n");
 	printf(" - pad0 = 0x%.2x\n", s->pad0);
 	printf(" - logic_seed = 0x%.8x\n", s->logic_seed);
 	printf(" - game_ver = %u\n", s->logic_seed);
 	printf("\n");
 
-	for(i = 1; i <= 0x1a; i++) {
+	for(wa->frame = 1; wa->frame <= 0x1a; wa->frame++) {
 		struct {
 			struct wa_hdr hdr;
 			uint8_t pad0;
@@ -284,68 +284,14 @@ static int wa__start_game(wa_t wa, const struct wa_hdr *r)
 		pkt.hdr.h_unknown = 0;
 		pkt.hdr.h_len = sizeof(pkt);
 		pkt.hdr.h_command = 0x1;
-		pkt.hdr.h_frame = i;
+		pkt.hdr.h_frame = wa->frame;
 		pkt.pad0 = 0;
 		pkt.flag = 0x0ac00000;
-		pkt.status = (i - 1) * 4;
+		pkt.status = (wa->frame - 1) * 4;
 		hex_dump(&pkt, sizeof(pkt), 0);
 		if ( !wa__send(wa, &pkt, sizeof(pkt)) )
 			return 0;
 	}
-
-#if 0
-	do {
-		struct {
-			struct wa_hdr hdr;
-			uint8_t byte[10];
-		}__attribute__((packed)) pkt;
-
-		pkt.hdr.h_chan = WORMS_CHAN_GAME;
-		pkt.hdr.h_unknown = 0;
-		pkt.hdr.h_len = sizeof(pkt);
-		pkt.hdr.h_command = 0x1;
-		pkt.hdr.h_frame = 0x1b;
-		pkt.byte[0x0] = 0x00;
-		pkt.byte[0x1] = 0x00;
-		pkt.byte[0x2] = 0x02;
-		pkt.byte[0x3] = 0x40;
-		pkt.byte[0x4] = 0x09;
-		pkt.byte[0x5] = 0x6a;
-		pkt.byte[0x6] = 0xee;
-		pkt.byte[0x7] = 0x1e;
-		pkt.byte[0x8] = 0xc6;
-		pkt.byte[0x9] = 0x00;
-		hex_dump(&pkt, sizeof(pkt), 0);
-		if ( !wa__send(wa, &pkt, sizeof(pkt)) )
-			return 0;
-	}while(0);
-
-	do {
-		struct {
-			struct wa_hdr hdr;
-			uint8_t byte[10];
-		}__attribute__((packed)) pkt;
-
-		pkt.hdr.h_chan = WORMS_CHAN_GAME;
-		pkt.hdr.h_unknown = 0;
-		pkt.hdr.h_len = sizeof(pkt);
-		pkt.hdr.h_command = 0x1;
-		pkt.hdr.h_frame = 0x1c;
-		pkt.byte[0x0] = 0x00;
-		pkt.byte[0x1] = 0x00;
-		pkt.byte[0x2] = 0x00;
-		pkt.byte[0x3] = 0x50;
-		pkt.byte[0x4] = 0x02;
-		pkt.byte[0x5] = 0x00;
-		pkt.byte[0x6] = 0x01;
-		pkt.byte[0x7] = 0x1f;
-		pkt.byte[0x8] = 0xc6;
-		pkt.byte[0x9] = 0x32;
-		hex_dump(&pkt, sizeof(pkt), 0);
-		if ( !wa__send(wa, &pkt, sizeof(pkt)) )
-			return 0;
-	}while(0);
-#endif
 
 	return 1;
 }
@@ -423,6 +369,14 @@ static int wa__dispatch_lobby(wa_t wa, const struct wa_hdr *r)
 		wa__random_map(wa, r);
 		break;
 	default:
+		if ( wa->frame ) {
+			((struct wa_hdr *)r)->h_command = 0x25;
+			((struct wa_hdr *)r)->data[2] = 0x1;
+			if ( !wa__send(wa, r, r->h_len) )
+				return 0;
+			printf("ECHO ONE; ");
+			wa->frame = 0;
+		}
 		printf("Unknown lobby cmd: 0x%.2x len=%u\n",
 			r->h_command, r->h_len);
 		hex_dump(r->data, r->h_len - sizeof(*r), 0);
@@ -435,11 +389,12 @@ static int wa__dispatch_lobby(wa_t wa, const struct wa_hdr *r)
 static int wa__dispatch_game(wa_t wa, const struct wa_hdr *r)
 {
 	switch(r->h_command) {
-	case 1:
+	case 0:
 		if ( r->h_frame == 0x1b ) {
 			/* echo it back */
 			if ( !wa__send(wa, r, r->h_len) )
 				return 0;
+			wa->frame++;
 			printf("ECHO: ");
 		}
 	default:
@@ -494,7 +449,8 @@ int wa_chat(wa_t wa, const char *type, const char *to, const char *msg)
 	buf.hdr.h_unknown = 0;
 	buf.hdr.h_len = len + sizeof(buf.hdr);
 	buf.hdr.h_command = WORMS_SERVER_CHAT;
-	return wa__send(wa, &buf, sizeof(buf.hdr) + len);
+	printf(">>> %.*s\n", (int)sizeof(buf.msg), buf.msg);
+	return wa__send(wa, &buf, buf.hdr.h_len);
 }
 
 int wa_ready(wa_t wa, int ready)

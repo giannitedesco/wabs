@@ -27,15 +27,20 @@ void hex_dumpf(FILE *f, const void *buf, size_t len, size_t llen)
 			}else{
 				fprintf(f, ".");
 			}
-		}
-
-		for(; i < llen; i++)
-			fprintf(f, " ");
-
-		for(i = 0; i < line; i++) {
 			if ( i == 7 )
 				fprintf(f, " ");
+		}
+
+		for(; i < llen; i++) {
+			fprintf(f, " ");
+			if ( i == 7 )
+				fprintf(f, " ");
+		}
+
+		for(i = 0; i < line; i++) {
 			fprintf(f, " %02x", tmp[i]);
+			if ( i == 7 )
+				fprintf(f, " ");
 		}
 
 		fprintf(f, "\n");

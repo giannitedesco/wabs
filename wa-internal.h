@@ -5,6 +5,7 @@ struct _wa {
 	struct sockaddr_in sa;
 	char nick[17];
 	uint8_t playerid;
+	uint8_t frame;
 	int s;
 	int go;
 	wgt_t wgt;
