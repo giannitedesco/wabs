@@ -6,23 +6,20 @@
 
 #include "wa-internal.h"
 
-int wa__dispatch_game(wa_t wa, const struct wa_hdr *r)
+int wa__dispatch_game(wa_t wa, const struct wa_frame *f)
 {
-	switch(r->command) {
-	case 0:
-		if ( r->frame == 0x1b ) {
-			/* echo it back */
-			if ( !wa__send(wa, r, r->len) )
-				return 0;
-			wa->frame++;
-			printf("ECHO: ");
-		}
-	default:
-		printf("Unknown game cmd: 0x%.2x frame=%.2x len=%u\n",
-			r->command, r->frame, r->len);
-		hex_dump(r->data, r->len - sizeof(*r), 0);
-		break;
+	/* yeah, frame id is probably 16bits, and the rest
+	 * are some flags or something... Maybe even a bitmap,
+	 * see 1, 2 and 4 set there.
+	*/
+	if ( f->playerid == 0 && f->frame == 0x0200001b ) {
+		/* echo it back */
+		if ( !wa__send(wa, f, f->len) )
+			return 0;
+		wa->frame++;
 	}
+	printf("Frame: playerid=%u frame=0x%.8x len=%zu\n",
+		f->playerid, f->frame, f->len - sizeof(*f));
+	hex_dump(f->data, f->len - sizeof(*f), 0);
 	return 1;
 }
-

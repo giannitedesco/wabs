@@ -89,19 +89,17 @@ static int wa__start_game(wa_t wa, const struct wa_hdr *r)
 
 	for(wa->frame = 1; wa->frame <= 0x1a; wa->frame++) {
 		struct {
-			struct wa_hdr hdr;
-			uint8_t pad0;
-			uint32_t flag;
+			struct wa_frame hdr;
+			uint16_t flag;
 			uint16_t status;
 		}__attribute__((packed)) pkt;
 
 		pkt.hdr.chan = WORMS_CHAN_GAME;
 		pkt.hdr.unknown = 0;
 		pkt.hdr.len = sizeof(pkt);
-		pkt.hdr.command = 0x1;
+		pkt.hdr.playerid = wa->playerid;
 		pkt.hdr.frame = wa->frame;
-		pkt.pad0 = 0;
-		pkt.flag = 0x0ac00000;
+		pkt.flag = 0x0ac0;
 		pkt.status = (wa->frame - 1) * 4;
 		hex_dump(&pkt, sizeof(pkt), 0);
 		if ( !wa__send(wa, &pkt, sizeof(pkt)) )
@@ -181,7 +179,7 @@ int wa__dispatch_lobby(wa_t wa, const struct wa_hdr *r)
 	default:
 		if ( wa->frame ) {
 			((struct wa_hdr *)r)->command = 0x25;
-			((struct wa_hdr *)r)->data[2] = 0x1;
+			((struct wa_hdr *)r)->data[2] = wa->playerid;
 			if ( !wa__send(wa, r, r->len) )
 				return 0;
 			printf("ECHO ONE; ");

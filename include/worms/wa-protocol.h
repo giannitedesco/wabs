@@ -9,7 +9,16 @@ struct wa_hdr {
 	uint8_t unknown;
 	uint16_t len;
 	uint8_t command;
-	uint8_t frame;
+	uint8_t pad;
+	uint8_t data[0];
+}__attribute__((packed));
+
+struct wa_frame {
+	uint8_t chan;
+	uint8_t unknown;
+	uint16_t len;
+	uint8_t playerid;
+	uint32_t frame;
 	uint8_t data[0];
 }__attribute__((packed));
 
@@ -99,6 +108,13 @@ struct wa_start_game {
 #define WORMS_GAME_START_MAGIC	"GSAW"
 	char			magic[4];
 	uint32_t		game_ver;
+}__attribute__((packed));
+
+#define WORMS_SERVER_PLAYER_LEFT	0x19
+struct wa_player_left {
+	struct wa_hdr hdr;
+	uint16_t pad0;
+	uint32_t playerid;
 }__attribute__((packed));
 
 #define WORMS_SERVER_DEFAULT_SCHEME	0x1f

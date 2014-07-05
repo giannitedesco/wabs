@@ -22,6 +22,6 @@ int wa__recv(struct _wa *wa);
 const struct wa_hdr *wa__next_msg(struct _wa *wa);
 
 int wa__dispatch_lobby(wa_t wa, const struct wa_hdr *r);
-int wa__dispatch_game(wa_t wa, const struct wa_hdr *r);
+int wa__dispatch_game(wa_t wa, const struct wa_frame *f);
 
 #endif /* _WA_INTERNAL_H */

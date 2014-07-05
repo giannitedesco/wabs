@@ -68,7 +68,7 @@ int wa_mainloop(wa_t wa)
 			wa__dispatch_lobby(wa, r);
 			break;
 		case WORMS_CHAN_GAME:
-			wa__dispatch_game(wa, r);
+			wa__dispatch_game(wa, (struct wa_frame *)r);
 			break;
 		default:
 			printf("Unknown chan: 0x%.2x msg=0x%.2x len=%u\n",
