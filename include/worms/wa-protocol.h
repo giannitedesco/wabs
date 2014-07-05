@@ -1,11 +1,15 @@
 #ifndef _WA_PROTOCOK_H
 #define _WA_PROTOCOL_H
 
+#define WORMS_CHAN_LOBBY		0x01
+#define WORMS_CHAN_GAME			0x02
+
 struct wa_hdr {
 	uint8_t h_chan;
 	uint8_t h_unknown;
 	uint16_t h_len;
-	uint16_t h_command;
+	uint8_t h_command;
+	uint8_t h_frame;
 	uint8_t data[0];
 }__attribute__((packed));
 
@@ -87,6 +91,16 @@ struct wa_team_list {
 #define WORMS_SERVER_TEAM_REMOVE	0x10
 #define WORMS_SERVER_KICK		0x1b
 #define WORMS_SERVER_TEAM_ADD		0x1a
+#define WORMS_SERVER_START_GAME		0x1c
+struct wa_start_game {
+	struct wa_hdr		hdr;
+	uint16_t		pad0;
+	uint32_t		logic_seed;
+#define WORMS_GAME_START_MAGIC	"GSAW"
+	char			magic[4];
+	uint32_t		game_ver;
+}__attribute__((packed));
+
 #define WORMS_SERVER_DEFAULT_SCHEME	0x1f
 struct wa_default_scheme {
 	struct wa_hdr s_hdr;
