@@ -23,6 +23,9 @@ WORMS_BIN := worms
 WORMS_LIBS := -lreadline
 WORMS_OBJ := worms.o \
 		wa.o \
+		wa_io.o \
+		wa_lobby.o \
+		wa_game.o \
 		wgt.o \
 		hexdump.o
 
