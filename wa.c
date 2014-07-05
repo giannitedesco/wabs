@@ -448,7 +448,7 @@ int wa_chat(wa_t wa, const char *type, const char *to, const char *msg)
 	memset(&buf.hdr, 0, sizeof(buf.hdr));
 	buf.hdr.h_chan = 1;
 	buf.hdr.h_unknown = 0;
-	buf.hdr.h_len = len + sizeof(buf.hdr);
+	buf.hdr.h_len = len + sizeof(buf.hdr) + 1;
 	buf.hdr.h_command = WORMS_SERVER_CHAT;
 	printf(">>> %.*s\n", (int)sizeof(buf.msg), buf.msg);
 	return wa__send(wa, &buf, buf.hdr.h_len);
